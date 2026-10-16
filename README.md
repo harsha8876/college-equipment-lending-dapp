@@ -1,179 +1,219 @@
 # College Equipment Lending DApp
 
-A college needs a shared record of equipment availability and who has borrowed each item. This frontend reads and updates that record through an existing Solidity contract on Ethereum Sepolia. MetaMask signs transactions; the contract enforces permissions.
+| Student detail | Value |
+| --- | --- |
+| Name | Harsha Shetty |
+| Registration number | 230905536 |
+| Course | Blockchain Technology (CSE4444) |
+| Assignment | Blockchain Assignment  |
+| Project | College Equipment Lending DApp |
 
-## Project status
+**Repository:** [college-equipment-lending-dapp](https://github.com/harsha8876/college-equipment-lending-dapp) — URL taken from this project's Git `origin` remote.
 
-The user reports that the frontend is now working. This is a user-reported status, not independently verified live testing. No per-case live test evidence, screenshots, or transaction receipts were found in the repository during this README update, so individual results remain **Pending documentation**.
+## Problem statement and purpose
 
-## Technology stack
+Shared college equipment needs a reliable record of availability and its current borrower. Without a common record, students and staff can lose track of who has an item or attempt to borrow equipment that is already on loan.
 
-HTML, CSS, JavaScript, **Ethers.js 6.13.5**, Solidity, MetaMask, and **Ethereum Sepolia**. Python 3 provides the local HTTP server; there is no backend or build step.
+This DApp maintains that record in a Solidity smart contract. The admin registers equipment, users borrow available items, and only the recorded borrower can return an item. The browser interface displays the contract's equipment records and uses MetaMask to approve updates on Ethereum Sepolia.
 
 ## Features
 
-- Plain HTML, responsive CSS, and beginner-friendly JavaScript. No build step, React, or backend.
-- Ethers.js **6.13.5**, pinned in the CDN URL in `index.html`.
-- MetaMask account connection, network switching, balance display, and wallet change handling.
-- Real equipment records, IDs starting at zero, availability, and full borrower addresses.
-- Admin-only Add Equipment form, Borrow actions, and borrower-only Return actions.
-- Wallet approval, submitted, confirmed, cancelled, and failed transaction messages with Etherscan links.
-- Contract bytecode check before equipment reads; stale loads are discarded when the wallet changes.
-- Equipment names render as text, never as executable HTML.
+- Connect MetaMask and display the connected account, network, and Sepolia ETH balance.
+- Detect the wrong network and offer a switch to Sepolia.
+- List equipment IDs, names, availability, and borrower addresses from the deployed contract.
+- Allow only the contract admin to add equipment; hide the addition form for other accounts.
+- Borrow available equipment and show Return only to its current borrower.
+- Refresh records after confirmed transactions or with the Refresh button.
+- Display approval, submitted, confirmed, cancelled, and failure states with transaction links when available.
+- Clear stale data when the account or network changes and render equipment names safely as text.
 
-## Existing deployment
+Equipment IDs start at `0`. `equipmentCount()` gives the number of registered items. Adding, borrowing, and returning require gas, but borrowing and returning do not require an ETH payment to the contract.
+
+## Technology stack and project structure
+
+| Technology | Use |
+| --- | --- |
+| HTML, CSS, JavaScript | Browser interface, responsive styling, and interaction logic |
+| Ethers.js **6.13.5** | Contract reads, simulation, gas estimation, and signed transactions; pinned CDN script in `index.html` |
+| Solidity | Equipment records and contract permission checks; local source uses `pragma solidity ^0.8.20` |
+| MetaMask | Browser wallet, account access, and transaction approval |
+| Ethereum Sepolia | Public test network used by the frontend |
+| Remix IDE / Remix VM | Solidity compilation, initial local contract tests, and Sepolia contract interaction |
+| Python 3 | Local HTTP server |
+
+There is no React, backend service, npm dependency installation, or frontend build step. Internet access is needed to load Ethers.js and reach the wallet's RPC service. Ganache was not used.
+
+```text
+.
+├── index.html
+├── style.css
+├── app.js
+├── README.md
+├── contracts/
+│   └── EquipmentLending.sol
+└── ScreenShots/
+    ├── 01-solidity-compilation.png
+    ├── 02-contract-deployed-sepolia.png
+    ├── 03-frontend-wallet-connected-and-transaction-confirmed.png
+    ├── 03-add-equipment-wallet-approval.png
+    ├── 04-frontend-multimeter-borrowed-sepolia.png
+    ├── 06-add-equipment-success-remix-vm.png
+    ├── 05-borrow-already-borrowed-rejected-remix-vm.png
+    └── 06-non-admin-add-equipment-failed-sepolia-receipt.png
+```
+
+The Solidity source is [`contracts/EquipmentLending.sol`](contracts/EquipmentLending.sol). `app.js` groups the contract address, human-readable ABI, and network settings near the top of the file.
+
+## Existing Sepolia deployment
 
 | Setting | Value |
 | --- | --- |
 | Network | Ethereum Sepolia |
 | Chain ID | `11155111` |
 | Hex chain ID | `0xaa36a7` |
-| Contract | `0xBAc9b5d234744F8ee5197A249A407b812338B4F8` |
-| Explorer | [Sepolia contract](https://sepolia.etherscan.io/address/0xBAc9b5d234744F8ee5197A249A407b812338B4F8) |
+| Contract address | `0xBAc9b5d234744F8ee5197A249A407b812338B4F8` |
+| Explorer | [View contract on Sepolia Etherscan](https://sepolia.etherscan.io/address/0xBAc9b5d234744F8ee5197A249A407b812338B4F8) |
 
-The address, human-readable ABI, and network settings are grouped at the top of `app.js`. The address is normalized to lowercase when passed to Ethers so supplied letter casing does not cause a checksum error. No contract is modified or redeployed. The app discovers the admin using `admin()`; it does not assume your connected wallet is the deployment account.
+The deployment account is the admin. The frontend reads `admin()` and compares addresses without case sensitivity rather than assuming the connected account is an admin.
 
-## Exact local startup steps
+## Compilation, initial testing, and deployment procedure
 
-Requirements: Python 3, an internet connection for Ethers/RPC access, and a browser with the MetaMask extension. Use a dedicated test account with Sepolia test ETH for gas.
+Remix VM was used for the initial contract tests. Its simulated accounts and transactions are separate from Sepolia. Screenshots 06 and 07 document Remix VM tests; they are not Sepolia transaction evidence. Ganache was not used.
 
-1. Open a terminal.
-2. From the project folder, run (the `cd` below shows this checkout’s location):
+The compilation and deployment workflow is:
+
+1. Open the project's `contracts/EquipmentLending.sol` source in Remix.
+2. Select Solidity compiler **0.8.20**, as shown in screenshot 01, and compile `EquipmentLending.sol`. Preserve the original compiler configuration when reproducing the deployment; optimizer and EVM target settings are not established by the supplied screenshot.
+3. For initial tests, choose **Remix VM** in Deploy & Run Transactions, deploy a temporary VM instance, and exercise the functions with VM accounts. The deployment account becomes admin. The supplied evidence includes successful `addEquipment("Calculator")` and rejection of borrowing an already borrowed item.
+4. For the Sepolia deployment workflow, select MetaMask's **Sepolia** network, fund the deployment account with faucet test ETH, and select Remix's **Browser Extension / MetaMask** environment. Confirm the network is Sepolia and keep transaction Value at `0 wei`.
+5. Select `EquipmentLending`, deploy without constructor arguments, approve the deployment in MetaMask, and wait for confirmation. The existing Sepolia instance is recorded above and shown in screenshot 02.
+6. To interact with this project's **existing deployment**, use **At Address / Add Contract** with the configured address. Running the frontend does not require deployment. Do not deploy another contract to use this project.
+
+The local Solidity source and the visible compilation screenshot agree on the displayed contract logic. An exact source-to-deployed-bytecode comparison was not performed as part of this documentation update.
+
+## Run locally
+
+Requirements: Python 3, a browser with MetaMask installed, and an internet connection.
+
+1. Open a terminal in the project folder. For this checkout:
 
    ```sh
    cd /Users/harshashetty/BlockChain-Assignment
+   ```
+
+2. Start the server:
+
+   ```sh
    python3 -m http.server 8000
    ```
 
-3. Open **http://127.0.0.1:8000** in the browser where MetaMask is installed. Serve the files over HTTP; do not open `index.html` as a `file://` URL.
-4. Keep the terminal running. Stop the server with **Ctrl+C** when done.
+3. Open **http://127.0.0.1:8000** in the browser with MetaMask.
+4. Keep the terminal running while using the app. Stop it with **Ctrl+C** when finished.
 
-There is nothing to install with npm. If the directory is moved, use its new path in the `cd` command. If port 8000 is busy, use 8001 in both the command and URL.
+If using a cloned copy, enter that copy's project folder before starting the server. Use HTTP rather than opening `index.html` directly as a file. No npm command is required.
 
-## Solidity source
+## Using the DApp
 
-The repository includes [`contracts/EquipmentLending.sol`](contracts/EquipmentLending.sol). The existing file was inspected and left unchanged; no replacement contract was generated. Its declarations match the frontend ABI, but its exact correspondence to the source used for the existing deployment has not been independently verified.
+1. **Select Sepolia:** In MetaMask, enable test networks if needed and select Sepolia, chain ID `11155111`. If the app detects another network, click **Switch to Sepolia** and approve the switch.
+2. **Obtain test ETH:** Request Sepolia ETH from a Sepolia faucet using only your public wallet address. Wait for the transfer and click **Refresh** to update the displayed balance. Test ETH pays gas for equipment transactions.
+3. **Connect:** Click **Connect MetaMask**, select an account, and approve account access. The page checks existing permissions silently on load; it requests new account access only after Connect is clicked.
+4. **View equipment:** Review each item's ID, name, availability, and borrower. The available state uses the contract's stored borrower value, which this source resets to the zero address.
+5. **Add equipment:** Connect the admin account. Enter a non-blank name, such as `Digital Multimeter`, in the visible admin form and click **Add equipment**. The frontend trims surrounding whitespace. Review the MetaMask request, approve it, and wait for confirmation and refreshed records.
+6. **Borrow:** Click **Borrow equipment** on an available item, approve in MetaMask, and wait for confirmation. The item's borrower becomes the sender's address.
+7. **Return:** Connect the account recorded as borrower and click **Return equipment**. Approve and wait for confirmation. The contract should mark the item available and clear its borrower. Successful return execution is not documented by the supplied screenshots.
+8. **Refresh:** Click **Refresh** to reload changes made by other users. Changing accounts or networks clears the previous session's records and admin controls.
 
-Before submission, compare it with the original source in your Remix workspace. If it differs, export the **exact original deployed source** from Remix to `contracts/EquipmentLending.sol`; do not reconstruct it from the ABI or redeploy. Keep the original compiler settings/artifact for your compilation evidence.
+The frontend checks the network and contract bytecode before loading data. Ethers.js wraps MetaMask with `BrowserProvider`; the ABI and existing address create the contract instance. Reads use `admin()`, `equipmentCount()`, and `equipment(id)`. Writes use a signer, simulate the action, estimate gas, and send only if the checks succeed. Transaction controls remain disabled while a transaction is pending. A failed refresh after confirmation does not change the transaction's status to failed.
 
-## Sepolia and faucet ETH
+## Tests and observed results
 
-In MetaMask, enable **Show test networks** if necessary, then select **Sepolia**. The expected chain ID is `11155111` (`0xaa36a7`). The frontend also offers **Switch to Sepolia** when another network is selected.
+The user reports that the frontend is now working. The observations below are supported by the supplied screenshots and test context. Reviewing these files is not independent live-network execution or receipt verification. Evidence numbers refer to the screenshot sections below.
 
-To fund a test account, use a Sepolia faucet, paste only your **public wallet address**, and request Sepolia test ETH. Faucet availability, limits, and eligibility can vary. Wait for the faucet transfer to arrive and click **Refresh** to update the displayed balance. Sepolia test ETH is for testing; this app requires no equipment payment. Adding, borrowing, and returning still consume test ETH for gas.
-
-Approve account access when you click **Connect MetaMask**. For each equipment action, review and approve the separate transaction request in MetaMask, then wait for the frontend confirmation. Cancelling approval does not constitute a contract rejection. Never enter a private key, recovery phrase, or password into this app or a faucet.
-
-## Using the app
-
-1. **Connect:** Click **Connect MetaMask**, select an account in the extension, and approve access. Page load only checks existing access with `eth_accounts`; only the Connect button calls `eth_requestAccounts`. An already authorized account can reconnect automatically without an access prompt.
-2. **Network:** If you are on another chain, click **Switch to Sepolia** and approve the switch. If Sepolia is unknown, the app offers MetaMask a Sepolia configuration with a public RPC endpoint. MetaMask still controls approval. You can also enable test networks and select Sepolia directly in MetaMask.
-3. **Review:** Check the address, network, balance, and equipment records. An available item's borrower is shown exactly as stored by the contract, usually the zero address. An empty registry displays an empty state.
-4. **Add equipment:** Connect the deployment/admin account. The form appears only if it matches the address returned by `admin()`, ignoring letter case. Enter a non-blank name and submit. Surrounding whitespace is removed. Approve in MetaMask and wait for confirmation.
-5. **Borrow:** Use **Borrow equipment** on an available card. Approve the transaction and wait for confirmation. There is no ETH payment; gas is paid in Sepolia test ETH.
-6. **Return:** Use **Return equipment** when connected as the recorded borrower. Other users see the borrowed status without a Return action.
-7. **Refresh:** Reload current contract data and balance with **Refresh**. Changes from other users are not pushed automatically. A confirmed local transaction triggers a refresh automatically.
-8. **Change wallets or chains:** Use MetaMask. The app immediately clears prior contract data and loads the new session. Disconnected/locked accounts cannot keep stale admin controls or equipment actions.
-
-Transaction buttons remain disabled while approval or confirmation is pending, even if the account or network changes. An already submitted transaction belongs to its original account/network and may still confirm. If confirmation cannot be determined because of an RPC failure, follow the hash on Etherscan before retrying. MetaMask speed-ups use the replacement hash; cancellations or different replacement actions are reported separately.
-
-A successful receipt means **one confirmation**, not permanent finality. If refreshing fails after confirmation, the app explicitly keeps the transaction marked confirmed and offers Refresh. If an error occurs during estimation, resolve the error; do not bypass it by forcing a gas limit.
-
-## How JavaScript connects to the contract
-
-`new ethers.BrowserProvider(wallet)` wraps MetaMask's injected provider. After checking chain ID, the app verifies deployed bytecode with `getCode()`. An Ethers `Contract` combines the existing address, ABI, and provider for reads. `admin()`, `equipmentCount()`, and `equipment(id)` are read from the same block snapshot, with IDs from `0` through `count - 1`. Reads do not need a transaction or gas payment.
-
-For a write, the app checks the current account and chain, gets the MetaMask signer, and connects it through `contract.connect(signer)`. It simulates the action with `staticCall`, populates the request, and estimates gas before sending; a simulation or estimation failure prevents submission. It calls `addEquipment(name)`, `borrowEquipment(id)`, or `returnEquipment(id)` without an ETH `value`. MetaMask requests approval and Ethers waits for the receipt using `transaction.wait(1)` before data is refreshed. The contract remains the authority for permissions and valid state transitions. The browser console records transaction context, destination, call data, estimated gas, and error stage. A mined failure also triggers a separate lookup of the actual transaction and receipt details; a lookup failure does not hide the original error. An outer wallet routing destination alone does not establish the cause of a failure.
-
-The session version counter prevents slow responses from an old account/network from repopulating the page. Status and equipment DOM nodes use `textContent`, preserving literal names such as `<b>Camera</b>` safely.
-
-## Manual test plan
-
-**All individual results below are “Pending documentation” because supporting per-case live results are not recorded in the repository.** The user’s report that the frontend works does not establish each result in this table. Use at least two test accounts (admin A and student B); a third account C helps test unauthorized returns. Record actual observations and transaction hashes after execution. Prepare an available item before each borrow test.
-
-| Test | Input / setup | Expected result | Actual result |
+| Case | Environment / input | Expected result | Observed result and evidence |
 | --- | --- | --- | --- |
-| Missing extension | Open in a browser without MetaMask | Install/enable message; Connect disabled | Pending documentation |
-| No automatic access request | Fresh site permission, load page | No account access prompt until Connect is clicked | Pending documentation |
-| Wallet connection | Approve Connect on Sepolia | Correct full account, chain, balance, contract records | Pending documentation |
-| Wrong chain | Select another network | Old equipment/admin data clears; switch action appears | Pending documentation |
-| Network switch | Approve Switch to Sepolia | Chain 11155111 selected and data loads | Pending documentation |
-| Switch rejection | Reject network switch | Readable rejection; no equipment transactions enabled | Pending documentation |
-| Account change | Switch admin A to student B | Address/balance reload; admin form disappears | Pending documentation |
-| Disconnect / lock | Disconnect site or lock MetaMask | Old account/data/actions clear if extension reports no accounts | Pending documentation |
-| Bytecode check | Observe valid deployment load; for negative test use a temporary local copy configured with a known empty address | Real deployment loads; empty address reports missing bytecode before ABI reads | Pending documentation |
-| Empty registry | Only if existing count is zero | Empty state, no invented cards | Pending documentation |
-| Valid admin add | A adds `Digital multimeter` | Confirmation; count increases; new ID equals previous count | Pending documentation |
-| Trimmed name | A enters `  Tripod  ` | Stored name is `Tripod` | Pending documentation |
-| Blank frontend input | A enters spaces | Form rejects; no wallet approval or transaction | Pending documentation |
-| Empty contract input | A calls `addEquipment("")` in Remix | Contract rejects | Pending documentation |
-| Unauthorized add | B calls `addEquipment("Camera")` in Remix | Contract rejects; frontend hides form for B | Pending documentation |
-| Valid borrow | B borrows available ID | Confirmation; borrowed true; borrower B; Return appears | Pending documentation |
-| Double borrow | Borrow already borrowed ID through Remix | Contract rejects | Pending documentation |
-| Nonexistent borrow | Borrow ID equal to count through Remix | Contract rejects | Pending documentation |
-| Valid return | B returns its borrowed ID | Confirmation; available again; display contract's borrower value | Pending documentation |
-| Unauthorized return | C returns B's borrowed ID in Remix | Contract rejects; frontend has no Return for C | Pending documentation |
-| Wallet cancellation | Reject an add/borrow/return approval | Cancellation message; no new equipment action approved | Pending documentation |
-| Insufficient gas funds | Attempt action from account lacking test ETH | Readable insufficient funds/estimation error; no forced send | Pending documentation |
-| Literal equipment name | A adds `<b>Camera</b>` (creates a real test record) | Text appears literally, no HTML execution | Pending documentation |
-| Pending controls | Submit action; inspect during confirmation | All transaction controls disabled; submitted hash link visible | Pending documentation |
-| Session change during pending | Change account/chain while transaction pending | Stale data clears; original transaction tracked separately | Pending documentation |
-| RPC failure | Temporarily use an unreachable wallet RPC, then Refresh | Readable load failure; stale cards/admin cleared | Pending documentation |
-| Failure after confirmation | Interrupt RPC during post-receipt refresh if feasible | Status still says confirmed, plus refresh failure | Pending documentation |
-| External state change | Another account changes an item; click Refresh | Updated on-chain state appears | Pending documentation |
-| Speed-up / cancellation | Use MetaMask replacement while action is pending | Updated hash; speed-up confirms or cancellation is identified | Pending documentation |
-| Mobile / keyboard | Resize and navigate with Tab | No horizontal overflow; clear focus and accessible controls | Pending documentation |
+| Compile contract | Remix, `EquipmentLending.sol` | Compilation succeeds | Screenshot 01 shows Compiled with Solidity 0.8.20. |
+| Existing deployment | Sepolia, configured contract | Contract appears in deployed contracts | Screenshot 02 shows EquipmentLending under Sepolia. |
+| Wallet connection and admin view | Frontend with admin on Sepolia | Account, network, balance, and admin form displayed | Screenshot 03 shows these details and a confirmed transaction status. |
+| Transaction confirmation display | Frontend on Sepolia | Confirmation and explorer link displayed after a transaction | Screenshot 03 shows “Transaction confirmed on Sepolia (one confirmation)” and an explorer link; it does not identify the action by itself. |
+| Add Equipment approval | Frontend, `Digital Multimeter` | MetaMask asks for transaction approval | Screenshot 04 shows the approval request. Confirmation is not established by this screenshot alone. |
+| Equipment listing | Frontend on Sepolia | Stored equipment and borrowers displayed | Screenshot 05 shows three items: Calculator, Textbook, and Digital Multimeter, with their IDs and availability. |
+| Borrowed equipment state | Frontend on Sepolia, Digital Multimeter | Borrowed item shows borrower and Return action for that account | Screenshot 05 shows Digital Multimeter (ID 2) as Borrowed with a borrower and Return button. It documents the stored state, not a separate borrow receipt. |
+| Valid admin addition | Remix VM, `addEquipment("Calculator")` | Addition executes successfully | Screenshot 06 shows status 1 and decoded name `Calculator` for `addEquipment(string)`. This is a VM addition, not a Sepolia or borrow transaction. |
+| Borrow an already borrowed item | Remix VM, repeated borrow | Contract rejects the second borrow | Screenshot 07 shows rejection with “Equipment already borrowed”; the preceding borrow has a success indicator. |
+| Non-admin addition | Sepolia, second account calls `addEquipment("laptop")` | Addition should be rejected by the admin restriction | Screenshot 08 shows the second sender, decoded input `laptop`, and mined status 0. It contains no readable revert reason, so the receipt alone does not establish which validation caused failure. |
+| Successful borrower return | Borrower calls `returnEquipment(id)` | Item becomes available; borrower becomes zero address | Not documented. A Return button is not evidence that a return executed. |
+| Unauthorized return | Another account returns a borrowed item | Contract rejects the call | Not documented. |
+| Empty equipment name | Frontend blank input; contract `addEquipment("")` | Frontend blocks blank input; contract rejects empty string | Not documented as a completed test. |
+| Nonexistent equipment | Borrow or return ID equal to `equipmentCount()` | Contract rejects nonexistent ID | Not documented. |
+| Return available item | Return an item that is not borrowed | Contract rejects the call | Not documented. |
+| Wrong network / account change | Switch chain or account in MetaMask | Wrong-network notice or refreshed account data; no stale controls | Not documented. |
+| Wallet cancellation | Cancel a MetaMask approval | Cancellation message; requested transaction is not approved | Not documented. |
+| Insufficient gas funds / RPC failure | Unfunded account or unavailable RPC | Readable error; no forced transaction submission | Not documented. |
 
-### Testing contract-rejected actions in Remix
+### Interpreting approval and failure evidence
 
-The normal frontend intentionally blocks blank names and hides unauthorized actions. To verify contract enforcement, use **the exact original Solidity source/artifact** from your assignment in [Remix](https://remix.ethereum.org/). The local source is included at `contracts/EquipmentLending.sol`; confirm that it is the exact source used in Remix for this deployment before using it for evidence.
+**Wallet approval request:** MetaMask is asking for permission to submit a transaction. Screenshot 04 captures this stage; it does not prove mining or successful execution.
 
-1. Compile that existing source with its required compiler/settings. Compilation alone does not deploy anything.
-2. In **Deploy & Run Transactions**, choose the injected browser/MetaMask environment and confirm Sepolia, chain ID 11155111. Exact UI labels may vary with Remix versions.
-3. Select the original contract and use **At Address** with `0xBAc9b5d234744F8ee5197A249A407b812338B4F8`. **Do not click Deploy.** This attaches to the existing deployment.
-4. Keep **Value = 0 wei**. Read `admin()`, `equipmentCount()`, and `equipment(id)` to identify accounts and current state.
-5. For empty input, connect the admin and call `addEquipment` with `""`. For unauthorized addition, select a non-admin account and enter a nonempty name. For double borrowing or unauthorized return, first prepare an actually borrowed item and call the relevant function from the wrong account. For a nonexistent item, use ID equal to `equipmentCount()`.
-6. Capture the returned revert/estimation error and any Solidity reason. If estimation rejects, cancel/stop there. **Do not choose a force-send option.** An estimate rejection is a rejected call, normally without an on-chain hash or gas charge. If a transaction was mined and reverted, record its hash and failed receipt; mined failures consume gas.
+**Wallet cancellation:** The user rejects the request. This is different from a contract execution failure and does not demonstrate a Solidity restriction. No cancellation result is documented here.
 
-A **wallet cancellation** means the person refused an access/signature request; it does not prove that the contract rejected the action. A **contract rejection** means execution or gas estimation hit the contract's validation rules. Use a Solidity revert/failed receipt as evidence for rejection and label the screenshot accurately. The app preserves revert reasons when the RPC provides them; some providers omit the reason.
+**Contract rejection or execution failure:** Screenshot 07 provides a readable Solidity reason in Remix VM. Screenshot 08 provides a mined Sepolia receipt with status `0`, showing execution failure, but no readable reason. The local source contains the admin restriction, but screenshot 08 must not be described as displaying “Only admin can add equipment”. Mined failures consume gas; a call rejected during simulation or estimation may have no transaction hash.
 
-## Required screenshots
+To test actions hidden by the frontend, attach the original contract in Remix and call the function from the appropriate test account. For Sepolia, attach to the existing address with Value `0 wei`; VM tests must be labelled separately. If simulation or estimation rejects an action, record the rejection rather than force-sending it or increasing the gas limit.
 
-- [ ] Original Solidity compilation success in Remix (not fabricated by this frontend).
-- [ ] Existing deployment address and Sepolia network, from the original deployment record or explorer; do not redeploy for this screenshot.
-- [ ] Frontend wallet connection showing account, Sepolia, and balance.
-- [ ] Successful transaction with confirmation and clickable Sepolia transaction hash.
-- [ ] Failed transaction or rejected contract call with readable revert evidence. Wallet cancellation alone is not proof of contract rejection.
-- [ ] Actual blockchain data displayed in the frontend, including equipment ID, name, availability, borrower, and updated state.
+## Screenshots
 
-Use only actual observed contract data, receipts, and screenshots as blockchain evidence. Never provide private keys, recovery phrases, or passwords to the app or in assignment screenshots.
+### 01 — Successful Solidity compilation
 
-## Remaining before submission
+![Successful Solidity compilation](ScreenShots/01-solidity-compilation.png)
 
-- [ ] Compare `contracts/EquipmentLending.sol` with the exact deployed source from Remix and retain the original compiler settings/artifact.
-- [ ] Complete final test documentation: valid addition, borrowing, and returning; invalid inputs and unavailable/nonexistent IDs; unauthorized addition and return; wallet/network handling.
-- [ ] Replace each **Pending documentation** result with the actual observation and supporting evidence after verification. Record real transaction hashes only when transactions exist; rejected calls may have no hash.
-- [ ] Capture and include every item in the required screenshots checklist: compilation, existing deployment, wallet connection, successful transaction, failed transaction or rejected contract call, and blockchain data shown in the frontend.
-- [ ] Prepare the submission PDF with the problem statement, stack, contract address/network, implementation explanation, documented tests, and required screenshots.
-- [ ] Include the actual project **GitHub repository link in the submission PDF**, and confirm it opens for the evaluator. No repository URL has been invented here.
-- [ ] Review the final repository, screenshots, console output, and PDF for credentials before submitting.
+Successful Solidity compilation in Remix. The compiler panel shows version 0.8.20 and the Compiled indicator for EquipmentLending.
 
-## Local verification versus live verification
+### 02 — Sepolia deployment
 
-Local syntax, HTTP serving, and isolated UI/state checks can validate frontend behavior without signing anything. Simulated provider responses used for development checks are **not blockchain evidence**. Actual MetaMask connection, deployed bytecode/ABI compatibility, admin identity, contract records, balances, revert behavior, transactions, and receipts must be verified manually on Sepolia using the table above. The user reports that the frontend is now working; no independent live-network verification is claimed here.
+![EquipmentLending deployment shown on Sepolia](ScreenShots/02-contract-deployed-sepolia.png)
 
-Reference: [Ethers v6 documentation](https://docs.ethers.org/v6/single-page/).
+EquipmentLending deployment shown on Sepolia in Remix's deployed contracts panel with the Browser Extension / MetaMask environment.
 
-### Checks performed during creation
+### 03 — Connected frontend and confirmation status
 
-- Passed `node --check app.js` with Node.js 22.17.1.
-- Passed static checks for unique HTML IDs, matching JavaScript DOM targets, local asset references, the pinned Ethers script URL, and all four requested files.
-- Passed isolated simulated-provider checks for missing MetaMask, passive account access, case-insensitive admin recognition, safe literal name rendering, borrower-specific buttons, blank-name blocking, account/network changes, missing bytecode, wallet rejection, control recovery, disconnect cleanup, revert reasons, insufficient funds messages, and confirmed status surviving a failed refresh.
-- Local HTTP startup was attempted, but this execution environment blocked socket binding with `PermissionError: Operation not permitted`. HTTP serving and visual browser behavior have not been verified here. Run the startup command on your computer to complete those checks.
-- No wallet was accessed and no live Sepolia reads or transactions were performed during these checks. Individual results in the manual test table remain **Pending documentation** until supporting evidence is recorded.
+![Frontend connected as admin on Sepolia with confirmed transaction status](ScreenShots/03-frontend-wallet-connected-and-transaction-confirmed.png)
 
-### README update review
+Frontend connected as admin on Sepolia with a confirmed transaction status and explorer link. This image alone does not identify which equipment action confirmed.
 
-The five project files (`index.html`, `style.css`, `app.js`, `README.md`, and `contracts/EquipmentLending.sol`) were inspected for apparent credential assignments, private key blocks, common access-token formats, and possible raw private keys. No apparent credentials were found. Public wallet and contract addresses are expected project data. This inspection does not prove the absence of every possible secret.
+### 04 — Add Equipment wallet approval
 
-This update changes only `README.md`. No Solidity or frontend files were changed, and no commit, push, deployment, or live wallet test was performed.
+![MetaMask approval request for adding Digital Multimeter](ScreenShots/04-add-equipment-wallet-approval.png)
+
+MetaMask approval request for adding Digital Multimeter. This is an approval request, not proof of confirmation.
+
+### 05 — Blockchain data in the frontend
+
+![Sepolia equipment records including borrowed Digital Multimeter](ScreenShots/05-frontend-multimeter-borrowed-sepolia.png)
+
+Blockchain data displayed in the frontend, including borrowed Digital Multimeter, its borrower address, and a Return button. No successful return is shown.
+
+### 06 — Successful addition in Remix VM
+
+![Successful Calculator addition in Remix VM](ScreenShots/06-add-equipment-success-remix-vm.png)
+
+Successful `addEquipment("Calculator")` in Remix VM, with status 1. This is not a borrow transaction or a Sepolia transaction.
+
+### 07 — Already borrowed rejection in Remix VM
+
+![Remix VM rejection for already borrowed equipment](ScreenShots/07-borrow-already-borrowed-rejected-remix-vm.png)
+
+Remix VM rejection showing “Equipment already borrowed” when borrowing an already borrowed item.
+
+### 08 — Failed non-admin addition on Sepolia
+
+![Failed second-account addition receipt on Sepolia](ScreenShots/08-non-admin-add-equipment-failed-sepolia-receipt.png)
+
+A second account attempted `addEquipment("laptop")` on Sepolia; the receipt shows status 0. No readable revert reason is displayed, so this screenshot is not evidence of a particular revert message.
+
+## Remaining submission material and verification limits
+
+- A submission PDF is not present in the repository. Prepare it with the student details, project explanation, documented tests, screenshots, deployment address, and the GitHub repository link given above.
+- Successful return execution and the additional cases marked **Not documented** still lack recorded results. Capture the actual outcomes and relevant evidence to complete that test coverage; do not label them as passed based on implementation alone.
+- The provided screenshots were reviewed and their relative image paths checked. No new live wallet transactions, redeployment, or independent source-to-bytecode verification were performed during this README update.
+
+Never include private keys, recovery phrases, or passwords in the repository, screenshots, or submission PDF.
