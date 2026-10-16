@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#183b35">
+  <title>Campus Kit · Equipment Lending</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">CK</span> CAMPUS KIT <span class="network-pill">SEPOLIA TESTNET</span></div>
+      <p class="eyebrow">COLLEGE EQUIPMENT LENDING</p>
+      <h1>Shared equipment.<br>More possibilities.</h1>
+      <p class="intro">Borrow what you need, return it for the next student. Every loan is recorded on Ethereum Sepolia.</p>
+    </header>
+
+    <section class="panel wallet-panel" aria-labelledby="wallet-heading">
+      <div class="section-heading"><div><p class="eyebrow">YOUR CONNECTION</p><h2 id="wallet-heading">Wallet</h2></div><button id="connect-button" type="button">Connect MetaMask</button></div>
+      <dl class="wallet-details">
+        <div><dt>Account</dt><dd id="wallet-address">Not connected</dd></div>
+        <div><dt>Network</dt><dd id="wallet-network">Not connected</dd></div>
+        <div><dt>Balance</dt><dd id="wallet-balance">—</dd></div>
+      </dl>
+      <p id="wallet-message" class="message" role="status" aria-live="polite">Connect MetaMask to load the equipment registry.</p>
+      <button id="switch-button" class="secondary" type="button" hidden>Switch to Sepolia</button>
+      <p class="hint">Borrowing and returning cost test ETH for gas. There is no equipment payment.</p>
+    </section>
+
+    <section id="admin-panel" class="panel" aria-labelledby="admin-heading" hidden>
+      <p class="eyebrow">ADMIN ACCESS</p><h2 id="admin-heading">Add equipment</h2>
+      <form id="equipment-form">
+        <label for="equipment-name">Equipment name</label>
+        <div class="form-row"><input id="equipment-name" name="name" type="text" placeholder="e.g. Digital multimeter" required autocomplete="off" aria-describedby="name-help"><button id="add-button" type="submit">Add equipment</button></div>
+        <p id="name-help" class="hint">Only the contract admin can add equipment. Names cannot be blank.</p>
+        <p id="form-error" class="error" role="alert"></p>
+      </form>
+    </section>
+
+    <section class="panel transaction-panel" aria-labelledby="transaction-heading">
+      <p class="eyebrow">ON-CHAIN ACTIVITY</p><h2 id="transaction-heading">Transaction status</h2>
+      <div id="transaction-status" role="status" aria-live="polite" aria-atomic="true"><p>No transaction yet. Your next action will appear here.</p></div>
+    </section>
+
+    <section class="registry" aria-labelledby="equipment-heading">
+      <div class="section-heading"><div><p class="eyebrow">THE SHARED COLLECTION</p><h2 id="equipment-heading">Equipment <span id="equipment-total" class="count">—</span></h2></div><button id="refresh-button" class="secondary" type="button" disabled>Refresh</button></div>
+      <p id="list-message" class="message" role="status" aria-live="polite">Connect your wallet on Sepolia to see available equipment.</p>
+      <div id="equipment-list" class="equipment-grid" aria-busy="false"></div>
+    </section>
+    <footer><p>College Equipment Lending DApp · Assignment project</p><a href="https://sepolia.etherscan.io/address/0xBAc9b5d234744F8ee5197A249A407b812338B4F8" target="_blank" rel="noopener noreferrer">View deployed contract ↗</a><p>Real contract data only · Ethereum Sepolia · Chain ID 11155111</p></footer>
+  </main>
+</body>
+</html>
